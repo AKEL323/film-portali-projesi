@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Film Ekle - Admin</title>
+    <style>
+        body { background-color: #121212; color: white; font-family: sans-serif; margin: 0; padding: 0; }
+        header { background-color: #1f1f1f; padding: 20px; text-align: center; border-bottom: 2px solid #e50914; }
+        .container { max-width: 500px; margin: 40px auto; background-color: #1f1f1f; padding: 30px; border-radius: 8px; }
+        input, select, textarea { width: 100%; padding: 10px; margin: 10px 0 20px 0; background-color: #333; color: white; border: 1px solid #555; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #e50914; color: white; border: none; padding: 12px; width: 100%; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        button:hover { background-color: #f40612; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h2>🎬 Yeni Film Ekle</h2>
+        <a href="/" style="color: #aaa; text-decoration: none;">← Ana Sayfaya Dön</a>
+    </header>
+
+    <div class="container">
+        <form id="filmFormu">
+            <label>Film Adı:</label>
+            <input type="text" id="title" required placeholder="Örn: Matrix">
+
+            <label>Türü:</label>
+            <select id="genre">
+                <option value="Aksiyon">Aksiyon</option>
+                <option value="Bilim Kurgu">Bilim Kurgu</option>
+                <option value="Dram">Dram</option>
+                <option value="Komedi">Komedi</option>
+            </select>
+
+            <label>Puanı (10 üzerinden):</label>
+            <input type="number" id="rating" step="0.1" max="10" required placeholder="Örn: 8.7">
+
+            <label>Film Özeti:</label>
+            <textarea id="description" rows="4" required placeholder="Film ne anlatıyor?"></textarea>
+
+            <label>Afiş Linki (URL):</label>
+            <input type="text" id="posterUrl" placeholder="Örn: https://ornek.com/afis.jpg">
+
+            <label style="color: #e50914;">Admin Şifresi:</label>
+            <input type="password" id="adminSifresi" required placeholder="Yönetici şifresini girin">
+
+            <button type="submit">Filmi Kaydet</button>
+        </form>
+        <p id="mesaj" style="text-align: center; color: #4caf50; display: none;">Film başarıyla eklendi! 🎉</p>
+    </div>
+
+    <script>
+        // Form gönderildiğinde olacaklar
+        document.getElementById('filmFormu').addEventListener('submit', async function(e) {
+            e.preventDefault(); // Sayfanın yenilenmesini engelle
+
+           // Formdaki bilgileri al
+            const yeniFilm = {
+                title: document.getElementById('title').value,
+                genre: document.getElementById('genre').value,
+                rating: document.getElementById('rating').value,
+                description: document.getElementById('description').value,
+                posterUrl: document.getElementById('posterUrl').value // YENİ EKLENDİ
+            };
+
+            // Backend'e gönder (POST işlemi)
+            try {
+                const girilenSifre = document.getElementById('adminSifresi').value; // YENİ EKLENDİ
+
+                const cevap = await fetch('/api/movies', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'admin_sifresi': girilenSifre // YENİ EKLENDİ
+                    },
+                    body: JSON.stringify(yeniFilm)
+                });
+
+                if(cevap.ok) {
+                    document.getElementById('mesaj').style.display = 'block'; // Başarı mesajını göster
+                    document.getElementById('filmFormu').reset(); // Formu temizle
+                }
+            } catch (hata) {
+                alert("Bir hata oluştu!");
+            }
+        });
+    </script>
+</body>
+</html>
