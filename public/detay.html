@@ -3,27 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Film Detayı ve Yorumlar</title>
+    <title>Film Detayı</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
     <style>
-   img {
-    width: 100% !important;
-    height: 450px !important; 
-    object-fit: cover !important; 
-    object-position: center !important; 
-    border-radius: 10px !important;
-}
-}
-        body { background-color: #121212; color: white; font-family: sans-serif; margin: 0; padding: 0; }
-        header { background-color: #1f1f1f; padding: 20px; text-align: center; border-bottom: 2px solid #e50914; }
-        .container { max-width: 800px; margin: 40px auto; background-color: #1f1f1f; padding: 30px; border-radius: 8px; border: 1px solid #333; }
-        .film-baslik { color: #e50914; font-size: 32px; margin-top: 0; }
-        .bilgi-etiketi { background-color: #333; padding: 5px 10px; border-radius: 4px; margin-right: 10px; font-size: 14px;}
-        .ozet { font-size: 18px; line-height: 1.6; margin-top: 20px; color: #ddd; }
+        /* Siyah arka plan ve beyaz yazılar */
+        body {
+            background-color: #141414 !important; 
+            color: #ffffff !important;
+        }
         
-        /* Yorum Alanı Tasarımı */
-        .yorum-kutusu { background-color: #222; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #e50914; }
-        .yorum-yazari { font-weight: bold; color: #aaa; margin-bottom: 5px; font-size: 14px; }
-        .yorum-metni { margin: 0; font-size: 16px; line-height: 1.4; }
+        /* Afişi ezilmekten kurtaran ve jilet gibi yapan kodumuz */
+        img {
+            width: 100% !important;
+            height: 450px !important; 
+            object-fit: cover !important; 
+            object-position: center !important; 
+            border-radius: 10px !important;
+        }
     </style>
 </head>
 <body>
