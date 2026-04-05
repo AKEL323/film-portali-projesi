@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Film Detayı ve Yorumlar</title>
+    <style>
+        img {
+    width: 100%;
+    height: 450px; 
+    object-fit: cover; 
+    object-position: center; 
+    border-radius: 10px;
+}
+        body { background-color: #121212; color: white; font-family: sans-serif; margin: 0; padding: 0; }
+        header { background-color: #1f1f1f; padding: 20px; text-align: center; border-bottom: 2px solid #e50914; }
+        .container { max-width: 800px; margin: 40px auto; background-color: #1f1f1f; padding: 30px; border-radius: 8px; border: 1px solid #333; }
+        .film-baslik { color: #e50914; font-size: 32px; margin-top: 0; }
+        .bilgi-etiketi { background-color: #333; padding: 5px 10px; border-radius: 4px; margin-right: 10px; font-size: 14px;}
+        .ozet { font-size: 18px; line-height: 1.6; margin-top: 20px; color: #ddd; }
+        
+        /* Yorum Alanı Tasarımı */
+        .yorum-kutusu { background-color: #222; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #e50914; }
+        .yorum-yazari { font-weight: bold; color: #aaa; margin-bottom: 5px; font-size: 14px; }
+        .yorum-metni { margin: 0; font-size: 16px; line-height: 1.4; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h2>🎬 Film Portalı</h2>
+        <a href="/" style="color: #aaa; text-decoration: none;">← Ana Sayfaya Dön</a>
+    </header>
+
+    <div class="container" id="filmDetayAlani">
+        <h2>Film Yükleniyor...</h2>
+    </div>
+
+    <div class="container" style="margin-top: 20px;">
+        <h3 style="border-bottom: 1px solid #444; padding-bottom: 10px;">💬 Yorumlar</h3>
+        
+        <div id="yorumYapmaAlani" style="background-color: #222; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none;">
+            <p style="margin-top: 0; color: #aaa;">Yorumunuzu yazın (<span id="aktifKullanici" style="color:white; font-weight:bold;"></span> olarak):</p>
+            <textarea id="yorumMetni" rows="3" placeholder="Bu film hakkında ne düşünüyorsunuz?" style="width: 100%; padding: 10px; background: #333; color: white; border: 1px solid #555; border-radius: 4px; box-sizing: border-box; font-family: inherit; resize: vertical;"></textarea>
+            <button onclick="yorumGonder()" style="background-color: #e50914; color: white; border: none; padding: 10px 20px; border-radius: 4px; margin-top: 10px; cursor: pointer; font-weight: bold;">Yorumu Gönder</button>
+        </div>
+
+        <div id="girisUyarisi" style="color: #aaa; margin-bottom: 20px; padding: 15px; background-color: #222; border-radius: 4px; text-align: center;">
+            Yorum yapmak için <a href="/login" style="color: #e50914; font-weight: bold; text-decoration: none;">giriş yapmalısınız</a>.
+        </div>
+
+        <div id="yorumListesi">
+            <p style="color: #aaa;">Yorumlar yükleniyor...</p>
+        </div>
+    </div>
+
+    <script>
+        // Sayfa açıldığında gerekli bilgileri al
+        const urlParams = new URLSearchParams(window.location.search);
+        const filmId = urlParams.get('id');
+        const kullaniciAdim = localStorage.getItem('kullaniciAdim'); // Tarayıcıdan giriş yapan kişiyi al
+
+        // 1. FİLM DETAYINI GETİR
+        async function filmDetayiniGetir() {
+            if (!filmId) {
+                document.getElementById('filmDetayAlani').innerHTML = "<h2>Hata: Film ID bulunamadı.</h2>";
+                return;
+            }
+
+            try {
+                const cevap = await fetch(`/api/movies/${filmId}`);
+                const film = await cevap.json();
+
+                const afisResmi = film.posterUrl ? film.posterUrl : 'https://via.placeholder.com/800x400?text=Afis+Yok';
+
+                document.getElementById('filmDetayAlani').innerHTML = `
+                    <h1 class="film-baslik">${film.title}</h1>
+                    <img src="${afisResmi}" style="width: 100%; height: 400px; object-fit: cover; border-radius: 8px; margin-bottom: 20px;">
+                    
+                    <div style="margin-bottom: 20px;">
+                        <span class="bilgi-etiketi">🎭 Tür: ${film.genre}</span>
+                        <span class="bilgi-etiketi" id="filmPuani">⭐ Puan: ${film.rating}/10</span>
+                        <span class="bilgi-etiketi">👁️ İzlenme: ${film.views}</span>
+                    </div>
+                    
+                    <div style="background-color: #333; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <span style="font-weight: bold;">Bu filme puan ver (1-10):</span>
+                        <input type="number" id="puanKutusu" min="1" max="10" value="10" style="width: 60px; padding: 5px; margin-left: 10px; background: #222; color: white; border: 1px solid #555;">
+                        <button onclick="puanGonder()" style="background-color: #4caf50; color: white; border: none; padding: 7px 15px; margin-left: 10px; border-radius: 4px; cursor: pointer;">Gönder</button>
+                    </div>
+
+                    <p class="ozet">${film.description}</p>
+                `;
+            } catch (hata) {
+                document.getElementById('filmDetayAlani').innerHTML = "<h2>Film yüklenirken hata oluştu.</h2>";
+            }
+        }
+
+        // 2. FİLME AİT YORUMLARI GETİR
+        async function yorumlariGetir() {
+            try {
+                const cevap = await fetch(`/api/comments/${filmId}`);
+                const yorumlar = await cevap.json();
+                
+                const liste = document.getElementById('yorumListesi');
+                liste.innerHTML = ''; // "Yükleniyor" yazısını sil
+                
+                if (yorumlar.length === 0) {
+                    liste.innerHTML = '<p style="color: #aaa;">Bu filme henüz yorum yapılmamış. İlk yorumu siz yapın!</p>';
+                    return;
+                }
+
+                // Her bir yorumu ekrana bas
+                yorumlar.forEach(yorum => {
+                    // Tarihi güzel bir formata çevir (Örn: 26.03.2024)
+                    const tarih = new Date(yorum.createdAt).toLocaleDateString('tr-TR');
+                    
+                    liste.innerHTML += `
+                        <div class="yorum-kutusu">
+                            <div class="yorum-yazari">👤 ${yorum.author} <span style="color:#555; font-size:12px; margin-left:10px;">📅 ${tarih}</span></div>
+                            <p class="yorum-metni">${yorum.text}</p>
+                        </div>
+                    `;
+                });
+            } catch (hata) {
+                document.getElementById('yorumListesi').innerHTML = "<p>Yorumlar yüklenemedi.</p>";
+            }
+        }
+
+        // 3. YENİ YORUM GÖNDERME
+        async function yorumGonder() {
+            const metin = document.getElementById('yorumMetni').value;
+            
+            if (!metin.trim()) {
+                alert("Lütfen boş bir yorum göndermeyin!");
+                return;
+            }
+
+            const veri = {
+                movieId: filmId,
+                author: kullaniciAdim,
+                text: metin
+            };
+
+            try {
+                const cevap = await fetch('/api/comments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(veri)
+                });
+
+                if (cevap.ok) {
+                    document.getElementById('yorumMetni').value = ''; // Kutuyu temizle
+                    yorumlariGetir(); // Listeyi anında güncelle ki yazdığı yorumu hemen görsün
+                }
+            } catch (hata) {
+                alert("Yorum gönderilemedi!");
+            }
+        }
+// YENİ EKLENEN: PUAN GÖNDERME FONKSİYONU
+        async function puanGonder() {
+            const verilenPuan = document.getElementById('puanKutusu').value;
+            try {
+                const cevap = await fetch(`/api/movies/${filmId}/rate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ verilenPuan: Number(verilenPuan) })
+                });
+                const sonuc = await cevap.json();
+                
+                if(cevap.ok) {
+                    alert("Puanınız kaydedildi!");
+                    document.getElementById('filmPuani').innerHTML = `⭐ Puan: ${sonuc.guncelPuan}/10`; // Ekranda puanı anında güncelle
+                } else {
+                    alert(sonuc.hata || "Puan gönderilemedi.");
+                }
+            } catch(hata) {
+                alert("Sunucuya ulaşılamadı.");
+            }
+        }
+        // 4. SAYFA YÜKLENDİĞİNDE YAPILACAKLAR (ANA KONTROL)
+        async function sayfaYukle() {
+            // Kullanıcı giriş yapmış mı kontrol et
+            if (kullaniciAdim) {
+                document.getElementById('yorumYapmaAlani').style.display = 'block'; // Yorum kutusunu göster
+                document.getElementById('aktifKullanici').innerText = kullaniciAdim; // İsmini yaz
+                document.getElementById('girisUyarisi').style.display = 'none'; // Uyarıyı gizle
+            }
+
+            await filmDetayiniGetir(); // Filmi çek
+            await yorumlariGetir(); // Yorumları çek
+        }
+
+        // Başlat
+        sayfaYukle();
+    </script>
+</body>
+</html>
